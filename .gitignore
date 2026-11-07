@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+node_modules/
+out/
+dist-backend/
+build/
+release/
+.u2net/
+*.log

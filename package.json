@@ -1,0 +1,63 @@
+{
+  "name": "clearcut-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ClearCut background remover desktop app",
+  "main": "out/main/index.js",
+  "scripts": {
+    "postinstall": "node node_modules/electron/install.js",
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "package": "npm run backend:build && npm run build && electron-builder",
+    "package:win": "npm run package -- --win",
+    "package:mac": "npm run package -- --mac",
+    "package:linux": "npm run package -- --linux",
+    "backend:build": "node scripts/build-backend.mjs"
+  },
+  "devDependencies": {
+    "electron": "^45.2.3",
+    "electron-builder": "^26.0.12",
+    "electron-vite": "^5.0.0",
+    "vite": "^7.0.0"
+  },
+  "build": {
+    "appId": "com.clearcut.desktop",
+    "productName": "ClearCut",
+    "electronDist": "node_modules/electron/dist",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "out/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "dist-backend/clearcut-api",
+        "to": "backend",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "out/renderer",
+        "to": "renderer",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.photography"
+    },
+    "linux": {
+      "target": "AppImage",
+      "category": "Graphics"
+    }
+  }
+}

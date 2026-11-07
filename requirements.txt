@@ -4,3 +4,4 @@ python-multipart
 rembg[cpu]
 httpx
 Pillow
+pyinstaller

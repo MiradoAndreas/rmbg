@@ -1,4 +1,5 @@
 import asyncio
+import os
 from contextlib import asynccontextmanager
 from io import BytesIO
 from ipaddress import ip_address
@@ -9,6 +10,7 @@ from urllib.parse import urljoin, urlparse
 import httpx
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse, Response
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from PIL import Image, UnidentifiedImageError
 from pydantic import BaseModel, HttpUrl
@@ -16,7 +18,7 @@ from rembg import new_session, remove
 from starlette.concurrency import run_in_threadpool
 
 BASE_DIR = Path(__file__).resolve().parent
-STATIC_DIR = BASE_DIR / "static"
+STATIC_DIR = Path(os.environ.get("CLEARCUT_STATIC_DIR", str(BASE_DIR / "static")))
 
 
 MAX_UPLOAD_SIZE = 10 * 1024 * 1024
@@ -37,6 +39,21 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Background Remover", lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+
+@app.middleware("http")
+async def desktop_access(request, call_next):
+    token = os.environ.get("CLEARCUT_TOKEN")
+    if token and request.headers.get("x-clearcut-token") != token:
+        return JSONResponse({"detail": "Unauthorized"}, status_code=403)
+    response = await call_next(request)
+    if token:
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' blob: data: https: http:; connect-src 'self'; "
+            "object-src 'none'; frame-ancestors 'none'; base-uri 'self'"
+        )
+    return response
 
 
 class URLRequest(BaseModel):
@@ -199,3 +216,9 @@ async def remove_bg_from_url(body: URLRequest):
         media_type="image/png",
         headers={"Content-Disposition": 'inline; filename="output.png"'},
     )
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="127.0.0.1", port=int(os.environ.get("CLEARCUT_PORT", "8000")))

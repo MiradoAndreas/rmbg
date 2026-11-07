@@ -1,0 +1,56 @@
+name: Build Linux desktop
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  appimage:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install Python dependencies
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install -r requirements.txt
+
+      - name: Install desktop dependencies
+        run: npm ci
+
+      - name: Build Linux service and AppImage
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: '1'
+        run: npm run package:linux
+
+      - name: Check Linux backend and packaged assets
+        run: |
+          .venv/bin/python - <<'PY'
+          from pathlib import Path
+          service = Path('release/linux-unpacked/resources/backend/clearcut-api')
+          with service.open('rb') as stream:
+              assert stream.read(4) == b'\x7fELF', 'Backend must be a native Linux executable'
+          assert service.stat().st_mode & 0o111, 'Backend must be executable'
+          assert Path('release/linux-unpacked/resources/renderer/index.html').is_file()
+          assert list(Path('release').glob('*.AppImage')), 'AppImage was not produced'
+          PY
+
+      - name: Upload Linux application
+        uses: actions/upload-artifact@v4
+        with:
+          name: ClearCut-Linux-x64
+          path: release/*.AppImage
+          if-no-files-found: error
+          retention-days: 14
