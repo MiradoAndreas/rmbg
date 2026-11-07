@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog } from 'electron'
+import { app, BrowserWindow, dialog, Menu } from 'electron'
 import { spawn } from 'node:child_process'
 import { createServer } from 'node:net'
 import { setTimeout as delay } from 'node:timers/promises'
@@ -120,6 +120,7 @@ if (!app.requestSingleInstanceLock()) {
     mainWindow?.focus()
   })
   app.whenReady().then(() => {
+    Menu.setApplicationMenu(null)
     setupUpdates(
       () => mainWindow,
       (event) => event.sender === mainWindow?.webContents &&
