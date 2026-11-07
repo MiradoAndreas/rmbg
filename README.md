@@ -76,6 +76,12 @@ packaged files; test the graphical application on the intended Linux desktop.
 
 ## In-app updates
 
+For a Windows installer from GitHub Actions, push the source and workflows,
+then open **Actions → Build Windows desktop → Run workflow**. Download the
+`ClearCut-Windows-x64` artifact from the completed run, extract it, close the
+running app, and run the `.exe` installer over the existing installation.
+This manual workflow builds downloadable files without publishing a release.
+
 Version 1.1.0 adds a compact **Check for updates** button. It checks public GitHub
 Releases at `MiradoAndreas/rmbg`. Users choose **Download update**, then
 **Restart and install**. Windows uses the NSIS installer; Linux users must run

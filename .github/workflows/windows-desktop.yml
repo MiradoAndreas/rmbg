@@ -1,0 +1,62 @@
+name: Build Windows desktop
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install Python dependencies
+        run: |
+          python -m venv .venv
+          .venv/Scripts/python.exe -m pip install -r requirements.txt
+
+      - name: Install desktop dependencies
+        run: npm ci
+
+      - name: Build Python service
+        run: npm run backend:build
+
+      - name: Build Electron and frontend
+        run: npm run build
+
+      - name: Package Windows installer
+        run: npx --no-install electron-builder --win --publish never
+
+      - name: Check Windows backend and packaged assets
+        shell: python
+        run: |
+          from pathlib import Path
+          service = Path('release/win-unpacked/resources/backend/clearcut-api.exe')
+          with service.open('rb') as stream:
+              assert stream.read(2) == b'MZ', 'Backend must be a Windows executable'
+          assert Path('release/win-unpacked/resources/renderer/index.html').is_file()
+          assert list(Path('release').glob('*.exe')), 'Installer was not produced'
+
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v7
+        with:
+          name: ClearCut-Windows-x64
+          path: |
+            release/*.exe
+            release/*.blockmap
+            release/latest.yml
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
