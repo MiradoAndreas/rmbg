@@ -1,0 +1,92 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b0d12">
+  <title>ClearCut — Background Remover</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/script.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a href="/" class="brand"><span class="brand-icon">C</span> ClearCut</a>
+    <span class="powered">AI BACKGROUND REMOVER</span>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <span class="eyebrow">IMAGE PROCESSING, SIMPLIFIED</span>
+      <h1>Remove backgrounds.<br><span>Keep what matters.</span></h1>
+      <p class="subtitle">
+        Supprime l'arrière-plan de tes images en quelques secondes.
+        Simple, rapide et sans montage manuel.
+      </p>
+    </section>
+
+    <section class="workspace">
+      <div class="tabs" role="tablist" aria-label="Source de l'image">
+        <button class="tab active" id="fileTab" role="tab"
+                aria-selected="true" type="button">Upload image</button>
+        <button class="tab" id="urlTab" role="tab"
+                aria-selected="false" type="button">Image URL</button>
+      </div>
+
+      <div id="filePanel">
+        <label class="dropzone" id="dropzone" for="fileInput">
+          <input id="fileInput" type="file" accept="image/jpeg,image/png,image/webp">
+          <span class="upload-icon" aria-hidden="true">↑</span>
+          <strong>Glisse ton image ici</strong>
+          <span class="muted">ou clique pour parcourir tes fichiers</span>
+          <span class="file-hint">PNG, JPG ou WEBP · 10 Mo maximum</span>
+        </label>
+      </div>
+
+      <form id="urlForm" class="url-panel hidden">
+        <label for="imageUrl">URL publique de ton image</label>
+        <div class="url-row">
+          <input id="imageUrl" type="url" placeholder="https://example.com/image.jpg"
+                 autocomplete="url" required>
+          <button class="primary" type="submit">Supprimer le fond</button>
+        </div>
+        <p class="muted small">
+          L'image doit être accessible publiquement. Certaines URL peuvent être refusées.
+        </p>
+      </form>
+
+      <div id="status" class="status" role="status" aria-live="polite">
+        Choisis une image pour commencer.
+      </div>
+
+      <div id="result" class="result hidden">
+        <div class="preview-grid">
+          <article class="preview-card">
+            <div class="preview-heading">ORIGINAL</div>
+            <div class="image-stage">
+              <img id="originalImage" alt="Image originale">
+            </div>
+          </article>
+          <article class="preview-card">
+            <div class="preview-heading">BACKGROUND REMOVED</div>
+            <div class="image-stage checkerboard">
+              <img id="resultImage" alt="Image sans arrière-plan">
+            </div>
+          </article>
+        </div>
+        <a id="downloadBtn" class="primary download" download="clearcut.png">
+          Télécharger le PNG
+        </a>
+        <button id="resetBtn" class="secondary" type="button">
+          Nouvelle image
+        </button>
+      </div>
+    </section>
+
+    <footer>
+      <span>ClearCut</span>
+      <span>Traitement par IA · PNG transparent</span>
+    </footer>
+  </main>
+</body>
+</html>
