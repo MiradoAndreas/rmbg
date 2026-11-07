@@ -1,0 +1,75 @@
+name: Publish desktop update
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: win
+          - os: ubuntu-22.04
+            target: linux
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Check release version
+        run: node -e "if(process.env.GITHUB_REF_NAME !== 'v'+require('./package.json').version) process.exit(1)"
+      - name: Prepare Python
+        run: python -m venv .venv
+      - name: Install Python packages (Windows)
+        if: runner.os == 'Windows'
+        run: .venv/Scripts/python.exe -m pip install -r requirements.txt
+      - name: Install Python packages (Linux)
+        if: runner.os == 'Linux'
+        run: .venv/bin/python -m pip install -r requirements.txt
+      - run: npm ci
+      - name: Build desktop release
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: '1'
+        run: npm run package:${{ matrix.target }}
+      - name: Match GitHub asset names to update metadata
+        run: python -c "from pathlib import Path; [p.rename(p.with_name(p.name.replace(' ', '-'))) for p in Path('release').iterdir() if p.is_file() and ' ' in p.name]"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: desktop-${{ matrix.target }}
+          if-no-files-found: error
+          path: |
+            release/*.exe
+            release/*.AppImage
+            release/*.blockmap
+            release/latest*.yml
+
+  publish:
+    needs: build
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: desktop-*
+          merge-multiple: true
+          path: artifacts
+      - name: Publish installers and update metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$TAG" --verify-tag --generate-notes --title "ClearCut $TAG" artifacts/*

@@ -5,6 +5,7 @@ import { setTimeout as delay } from 'node:timers/promises'
 import { join } from 'node:path'
 import { createWriteStream, mkdirSync } from 'node:fs'
 import { randomUUID } from 'node:crypto'
+import { setupUpdates } from './updates'
 
 let backend
 let backendUrl
@@ -118,7 +119,15 @@ if (!app.requestSingleInstanceLock()) {
     if (mainWindow?.isMinimized()) mainWindow.restore()
     mainWindow?.focus()
   })
-  app.whenReady().then(openWindow)
+  app.whenReady().then(() => {
+    setupUpdates(
+      () => mainWindow,
+      (event) => event.sender === mainWindow?.webContents &&
+        event.senderFrame === mainWindow.webContents.mainFrame &&
+        backendUrl && new URL(event.senderFrame.url).origin === backendUrl
+    )
+    return openWindow()
+  })
   app.on('activate', () => { if (!mainWindow) openWindow() })
   app.on('before-quit', () => { quitting = true; backend?.kill() })
   app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit() })

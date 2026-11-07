@@ -11,13 +11,13 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: npm
@@ -30,10 +30,20 @@ jobs:
       - name: Install desktop dependencies
         run: npm ci
 
-      - name: Build Linux service and AppImage
+      - name: Build Python service
+        shell: bash
+        run: |
+          mkdir -p build
+          npm run backend:build 2>&1 | tee build/backend-ci.log
+
+      - name: Build Electron and frontend
+        run: npm run build
+
+      - name: Package Linux AppImage
+        shell: bash
         env:
           APPIMAGE_EXTRACT_AND_RUN: '1'
-        run: npm run package:linux
+        run: npx --no-install electron-builder --linux --publish never 2>&1 | tee build/packaging-ci.log
 
       - name: Check Linux backend and packaged assets
         run: |
@@ -48,9 +58,18 @@ jobs:
           PY
 
       - name: Upload Linux application
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ClearCut-Linux-x64
           path: release/*.AppImage
           if-no-files-found: error
           retention-days: 14
+
+      - name: Upload build diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: Linux-build-diagnostics
+          path: build/*-ci.log
+          if-no-files-found: ignore
+          retention-days: 7

@@ -10,20 +10,14 @@
   <script src="/static/script.js" defer></script>
 </head>
 <body>
-  <header class="topbar">
-    <a href="/" class="brand"><span class="brand-icon">C</span> ClearCut</a>
-    <span class="powered">AI BACKGROUND REMOVER</span>
-  </header>
+
 
   <main class="container">
-    <section class="hero">
-      <span class="eyebrow">IMAGE PROCESSING, SIMPLIFIED</span>
-      <h1>Remove backgrounds.<br><span>Keep what matters.</span></h1>
-      <p class="subtitle">
-        Supprime l'arrière-plan de tes images en quelques secondes.
-        Simple, rapide et sans montage manuel.
-      </p>
-    </section>
+    <div id="appUpdates" class="app-updates hidden">
+      <span id="updateStatus" class="muted small" role="status" aria-live="polite"></span>
+      <button id="updateButton" class="secondary" type="button">Check for updates</button>
+    </div>
+
 
     <section class="workspace">
       <div class="tabs" role="tablist" aria-label="Source de l'image">
@@ -83,10 +77,10 @@
       </div>
     </section>
 
-    <footer>
+    <!-- <footer>
       <span>ClearCut</span>
       <span>Traitement par IA · PNG transparent</span>
-    </footer>
+    </footer> -->
   </main>
 </body>
 </html>

@@ -39,6 +39,8 @@ npm run package:win    # Build backend, frontend, and Windows installer
 ```
 
 Use `npm run package:mac` on macOS and `npm run package:linux` on Linux.
+Packaging commands explicitly disable publishing, including in CI. The separate
+release workflow uploads completed packages to GitHub after both builds succeed.
 Build each release on its target OS and architecture: the PyInstaller output
 is platform specific. Installers are written to `release/`. `npm run preview`
 runs the compiled Electron code using the development Python environment.
@@ -71,3 +73,32 @@ chmod +x ClearCut-*.AppImage
 
 The workflow does not publish a release. It checks the native backend format and
 packaged files; test the graphical application on the intended Linux desktop.
+
+## In-app updates
+
+Version 1.1.0 adds a compact **Check for updates** button. It checks public GitHub
+Releases at `MiradoAndreas/rmbg`. Users choose **Download update**, then
+**Restart and install**. Windows uses the NSIS installer; Linux users must run
+the AppImage from a writable location. Update checks are disabled in development.
+The original 1.0.0 app must be upgraded manually once to gain this button.
+
+For each future update, including HTML/CSS changes:
+
+1. Increment `package.json` and `package-lock.json` with `npm version patch --no-git-tag-version`.
+2. Commit and push the source changes, including the workflows.
+3. Create and push a matching version tag, for example `git tag v1.1.1` and
+   `git push origin v1.1.1` (replace with the actual package version).
+4. **Publish desktop update** builds on Windows and Linux, then publishes a
+   GitHub Release only after both builds succeed. It attaches the installers,
+   block maps, `latest.yml`, and `latest-linux.yml` that the updater needs.
+
+The repository and releases must be publicly readable for this configuration.
+Change the `build.publish` owner/repository if distributing from another repo.
+Do not put a GitHub token in the installed app. CI uses its scoped GitHub token.
+Use Windows signing credentials in CI before distributing signed releases, and
+keep the application ID and signing identity consistent across versions.
+
+Verify an update using two published versions: install the older updater-enabled
+version, publish a higher version with a visible change, then check, download,
+restart, and confirm the new version and change. A local build alone cannot
+verify the complete hosted update flow.

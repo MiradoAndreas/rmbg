@@ -1,6 +1,45 @@
 
 const $ = (selector) => document.querySelector(selector);
 
+// Only the Electron preload exposes the update controls.
+if (window.desktop?.updates) {
+  const controls = $("#appUpdates");
+  const button = $("#updateButton");
+  const status = $("#updateStatus");
+  let updateState;
+  const renderUpdate = (state) => {
+    updateState = state;
+    controls.classList.remove("hidden");
+    button.disabled = ["checking", "downloading", "unsupported"].includes(state.status);
+    button.textContent = state.status === "available" ? "Download update"
+      : state.status === "downloaded" ? "Restart and install" : "Check for updates";
+    const messages = {
+      idle: `Version ${state.currentVersion}`,
+      checking: "Checking for updates...",
+      current: `Version ${state.currentVersion} is up to date.`,
+      available: `Version ${state.version} is available.`,
+      downloading: `Downloading update: ${state.percent ?? 0}%`,
+      downloaded: `Version ${state.version} is ready to install.`
+    };
+    status.textContent = state.message || messages[state.status] || "";
+  };
+  const unsubscribe = window.desktop.updates.onState(renderUpdate);
+  window.desktop.updates.getState().then(renderUpdate).catch(() => {
+    status.textContent = "Update controls are unavailable. Restart the app.";
+  });
+  button.addEventListener("click", async () => {
+    if (updateState?.status === "downloaded" &&
+        !window.confirm("Restart ClearCut to install the update? Finish any image processing and save your PNG first.")) return;
+    button.disabled = true;
+    try {
+      renderUpdate(await window.desktop.updates.act());
+    } catch {
+      renderUpdate({ status: "error", message: "Could not check for updates. Please try again." });
+    }
+  });
+  window.addEventListener("beforeunload", unsubscribe, { once: true });
+}
+
 const fileTab = $("#fileTab");
 const urlTab = $("#urlTab");
 const filePanel = $("#filePanel");
